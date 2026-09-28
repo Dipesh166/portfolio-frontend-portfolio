@@ -7,6 +7,7 @@ import { usePortfolio } from '../hooks/usePortfolio'
 import type { MusicTrack } from '../lib/types'
 
 const EQ_BARS = 16
+const MAX_SKIPS = 2
 
 const shuffleIndex = (tracks: MusicTrack[], current?: number) => {
   if (tracks.length <= 1) return 0
@@ -262,10 +263,13 @@ export function MusicDisc() {
           }
         }}
         onError={() => {
-          const el = audioRef.current
           setIsPlaying(false)
+          // A failed load is almost always systemic (offline, CORS, 5xx) rather
+          // than one bad track, so stop after a couple of skips instead of
+          // cycling the whole playlist.
           errorCountRef.current += 1
-          if (el && tracks.length > 1 && errorCountRef.current < tracks.length) {
+          const el = audioRef.current
+          if (el && tracks.length > 1 && errorCountRef.current <= MAX_SKIPS) {
             pendingPlayRef.current = true
             setCurrentIndex((prev) => shuffleIndex(tracks, prev))
           } else {
