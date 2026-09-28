@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { cn } from 'cn'
 import { Section } from '../components/Section'
+import { SmartImage } from '../components/SmartImage'
 import { usePortfolio } from '../hooks/usePortfolio'
 import { resolveUrl } from '../lib/api'
 import { containerStagger, itemFadeUp, viewportOnce } from '../lib/motion'
@@ -77,16 +78,28 @@ export function Skills() {
                       />
                       <div className="relative flex items-center gap-3">
                         {skill.image ? (
-                          <img
+                          <SmartImage
                             src={resolveUrl(skill.image.url)}
                             alt={skill.image.alt || skill.name}
-                            className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-border"
+                            containerClassName="h-9 w-9 shrink-0 rounded-lg ring-1 ring-border"
+                            className="object-contain"
+                            fallback={
+                              <span className="grid h-full w-full place-items-center rounded-lg bg-primary/10 font-mono text-sm font-black text-primary">
+                                {skill.name.charAt(0)}
+                              </span>
+                            }
                           />
                         ) : skill.icon ? (
-                          <img
+                          <SmartImage
                             src={skill.icon}
                             alt=""
-                            className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-border"
+                            containerClassName="h-9 w-9 shrink-0 rounded-lg ring-1 ring-border"
+                            className="object-contain"
+                            fallback={
+                              <span className="grid h-full w-full place-items-center rounded-lg bg-primary/10 font-mono text-sm font-black text-primary">
+                                {skill.name.charAt(0)}
+                              </span>
+                            }
                           />
                         ) : (
                           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 font-mono text-sm font-black text-primary">

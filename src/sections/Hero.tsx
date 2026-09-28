@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowDown, FileDown } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '../components/ui/button'
+import { SmartImage } from '../components/SmartImage'
 import { TypedLine } from '../components/Typed'
 import { usePortfolio } from '../hooks/usePortfolio'
 import { resolveUrl } from '../lib/api'
@@ -122,10 +123,11 @@ export function Hero() {
                   className="inline-flex items-center gap-2 rounded-lg border border-border bg-card/70 px-3 py-1.5 font-mono text-xs font-semibold text-muted-foreground backdrop-blur transition-colors hover:border-primary/50 hover:text-primary"
                 >
                   {social.icon ? (
-                    <img
+                    <SmartImage
                       src={resolveUrl(social.icon)}
                       alt=""
-                      className="h-3.5 w-3.5 rounded object-cover"
+                      containerClassName="h-3.5 w-3.5 shrink-0 rounded"
+                      className="object-contain"
                     />
                   ) : (
                     <span className="text-[10px] font-black uppercase">
@@ -168,11 +170,12 @@ export function Hero() {
                   className="will-change-transform"
                 >
                   {imageUrl ? (
-                    <img
+                    <SmartImage
                       src={resolveUrl(imageUrl)}
                       alt={profile?.profile_image?.alt || name || 'Profile'}
                       onClick={() => setGrayscale((v) => !v)}
-                      className={`aspect-square w-full cursor-pointer object-cover object-top brightness-[1.05] transition duration-700 group-hover:scale-[1.03] ${grayscale ? 'grayscale saturate-0' : 'saturate-[0.95]'}`}
+                      containerClassName="aspect-square w-full cursor-pointer"
+                      className={`object-cover object-top brightness-[1.05] transition-[filter,transform] duration-700 group-hover:scale-[1.03] ${grayscale ? 'grayscale saturate-0' : 'saturate-[0.95]'}`}
                     />
                   ) : (
                     <div className="grid aspect-square w-full place-items-center bg-gradient-to-b from-primary/25 via-primary/5 to-transparent">

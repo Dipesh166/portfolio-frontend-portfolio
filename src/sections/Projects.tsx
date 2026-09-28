@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { ArrowUpRight, FolderGit2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Section } from '../components/Section'
+import { SmartImage } from '../components/SmartImage'
 import { Button } from '../components/ui/button'
 import { usePortfolio } from '../hooks/usePortfolio'
 import { resolveUrl } from '../lib/api'
@@ -33,11 +34,11 @@ export function Projects() {
               <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors duration-300 group-hover:border-primary/50">
                 <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                   {project.thumbnail?.url ? (
-                    <img
+                    <SmartImage
                       src={resolveUrl(project.thumbnail.url)}
                       alt={project.thumbnail.alt || project.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+                      containerClassName="h-full w-full"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
                     />
                   ) : (
                     <div className="grid h-full w-full place-items-center font-mono text-6xl font-black text-foreground/15">

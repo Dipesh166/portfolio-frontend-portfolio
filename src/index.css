@@ -203,6 +203,41 @@
   .animate-marquee {
     animation: marquee 14s linear infinite;
   }
+  .animate-shimmer {
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  .animate-scanline {
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 3px,
+      color-mix(in oklch, var(--primary), transparent 88%) 3px 4px
+    );
+  }
+  .animate-indeterminate {
+    animation: indeterminate 1.1s cubic-bezier(0.65, 0.05, 0.36, 1) infinite;
+  }
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--muted);
+    background-image: radial-gradient(var(--dot-strong) 1px, transparent 1px);
+    background-size: 13px 13px;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      100deg,
+      transparent 20%,
+      color-mix(in oklch, var(--primary), transparent 82%) 45%,
+      color-mix(in oklch, var(--foreground), transparent 90%) 50%,
+      color-mix(in oklch, var(--primary), transparent 82%) 55%,
+      transparent 80%
+    );
+    animation: skeleton-sheen 1.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
 }
 
 @keyframes caret-blink {
@@ -244,6 +279,33 @@
   }
   100% {
     transform: translateX(-50%);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(310%);
+  }
+}
+
+@keyframes skeleton-sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
   }
 }
 

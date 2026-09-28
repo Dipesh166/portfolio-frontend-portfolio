@@ -2,9 +2,10 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, ExternalLink, FolderGit2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { SmartImage } from '../components/SmartImage'
+import { DetailLoading } from '../components/States'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import { Skeleton } from '../components/ui/skeleton'
 import { getProject, resolveUrl } from '../lib/api'
 import { containerStagger, fadeIn, itemFadeUp, viewportOnce } from '../lib/motion'
 import type { Project } from '../lib/types'
@@ -59,13 +60,7 @@ function ProjectDetailContent({ slug }: { slug: string }) {
   }, [slug])
 
   if (!project && !error) {
-    return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-16 sm:px-6">
-        <Skeleton className="mb-8 h-5 w-24" />
-        <Skeleton className="mb-4 h-10 w-2/3" />
-        <Skeleton className="aspect-video w-full rounded-xl" />
-      </div>
-    )
+    return <DetailLoading path={`GET /public/projects/${slug}`} />
   }
 
   if (error || !project) {
@@ -129,19 +124,20 @@ function ProjectDetailContent({ slug }: { slug: string }) {
           className="mb-10 grid gap-4"
         >
           {gallery.length === 1 ? (
-            <img
+            <SmartImage
               src={resolveUrl(gallery[0].url)}
               alt={gallery[0].alt || project.title}
-              className="w-full rounded-xl border border-border object-cover"
+              containerClassName="aspect-[16/10] w-full overflow-hidden rounded-xl border border-border"
+              className="object-cover"
             />
           ) : (
             gallery.map((image) => (
-              <img
+              <SmartImage
                 key={image.file_id}
                 src={resolveUrl(image.url)}
                 alt={image.alt || project.title}
-                loading="lazy"
-                className="w-full rounded-xl border border-border object-cover"
+                containerClassName="aspect-[16/10] w-full overflow-hidden rounded-xl border border-border"
+                className="object-cover"
               />
             ))
           )}

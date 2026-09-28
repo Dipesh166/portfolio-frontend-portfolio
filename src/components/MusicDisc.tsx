@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Music2, Pause, Play, SkipForward, Volume2, VolumeX } from 'lucide-react'
+import { SmartImage } from './SmartImage'
 import { resolveUrl } from '../lib/api'
 import { usePortfolio } from '../hooks/usePortfolio'
 import type { MusicTrack } from '../lib/types'
@@ -249,11 +250,17 @@ export function MusicDisc() {
           <div className="relative z-10 flex items-center gap-2 sm:gap-3">
             <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full shadow-lg shadow-red-500/40 ring-2 ring-white/70 dark:ring-red-400/60 sm:h-10 sm:w-10">
               {coverUrl ? (
-                <img
+                <SmartImage
                   src={coverUrl}
                   alt={current?.title ?? 'Track cover'}
                   draggable={false}
-                  className="h-full w-full rounded-full object-cover"
+                  containerClassName="h-full w-full"
+                  className="object-cover"
+                  fallback={
+                    <div className="grid h-full w-full place-items-center rounded-full bg-gradient-to-br from-red-600 to-red-800">
+                      <Music2 className="h-4 w-4 text-white sm:h-5 sm:w-5" />
+                    </div>
+                  }
                 />
               ) : (
                 <div className="grid h-full w-full place-items-center rounded-full bg-gradient-to-br from-red-600 to-red-800">
@@ -348,11 +355,17 @@ export function MusicDisc() {
               <div className="absolute top-1/2 left-1/2 h-[40%] w-[40%] -translate-x-1/2 -translate-y-1/2">
                 <div className="relative grid h-full w-full place-items-center overflow-hidden rounded-full shadow-inner ring-1 ring-black/50 dark:ring-white/25">
                   {coverUrl ? (
-                    <img
+                    <SmartImage
                       src={coverUrl}
                       alt={current?.title ?? 'Track cover'}
                       draggable={false}
-                      className="h-full w-full rounded-full object-cover"
+                      containerClassName="h-full w-full"
+                      className="object-cover"
+                      fallback={
+                        <div className="grid h-full w-full place-items-center rounded-full bg-gradient-to-br from-primary/30 via-background to-background">
+                          <Music2 className="h-5 w-5 text-primary" />
+                        </div>
+                      }
                     />
                   ) : (
                     <div className="grid h-full w-full place-items-center rounded-full bg-gradient-to-br from-primary/30 via-background to-background">

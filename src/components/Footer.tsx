@@ -1,3 +1,4 @@
+import { SmartImage } from './SmartImage'
 import { usePortfolio } from '../hooks/usePortfolio'
 import { resolveUrl } from '../lib/api'
 
@@ -39,7 +40,12 @@ export function Footer() {
                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card/70 text-muted-foreground backdrop-blur transition-colors hover:border-primary/50 hover:text-primary"
               >
                 {social.icon ? (
-                  <img src={resolveUrl(social.icon)} alt="" className="h-4 w-4" />
+                  <SmartImage
+                    src={resolveUrl(social.icon)}
+                    alt=""
+                    containerClassName="h-4 w-4"
+                    className="object-contain"
+                  />
                 ) : (
                   <span className="font-mono text-xs font-bold uppercase">
                     {(FALLBACK_PLATFORMS[social.platform.toLowerCase()] ?? social.platform).charAt(0)}
