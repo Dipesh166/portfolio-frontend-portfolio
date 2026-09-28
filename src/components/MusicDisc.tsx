@@ -26,8 +26,10 @@ export function MusicDisc() {
   const eqRefs = useRef<HTMLSpanElement[]>([])
   const analyserRef = useRef<AnalyserNode | null>(null)
   const contextRef = useRef<AudioContext | null>(null)
+  const boundElRef = useRef<HTMLAudioElement | null>(null)
   const pendingPlayRef = useRef(false)
   const autoplayAttempted = useRef(false)
+  const errorCountRef = useRef(0)
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -38,26 +40,55 @@ export function MusicDisc() {
   const spinning = isPlaying && current != null
   const titleIsLong = (current?.title ?? '').length > 16
 
-  const ensureAnalyser = useCallback(async (el: HTMLAudioElement) => {
-    if (analyserRef.current || contextRef.current) return
-    try {
-      const Ctx = window.AudioContext ??
-        ((window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
-      if (!Ctx) return
-      const ctx = new Ctx()
-      const source = ctx.createMediaElementSource(el)
-      const analyser = ctx.createAnalyser()
-      analyser.fftSize = 64
-      analyser.smoothingTimeConstant = 0.85
-      source.connect(analyser)
-      analyser.connect(ctx.destination)
-      contextRef.current = ctx
-      analyserRef.current = analyser
-      if (ctx.state === 'suspended') await ctx.resume().catch(() => undefined)
-    } catch {
-      // Analyser unavailable — equalizer stays idle.
+  const resumeContext = useCallback(() => {
+    const ctx = contextRef.current
+    if (ctx && ctx.state === 'suspended') {
+      void ctx.resume().catch(() => undefined)
     }
   }, [])
+
+  // Must run inside a user gesture: Chrome refuses to start an AudioContext that
+  // is created before the page has been interacted with.
+  const ensureAnalyser = useCallback(
+    (el: HTMLAudioElement) => {
+      if (boundElRef.current === el && analyserRef.current) {
+        resumeContext()
+        return
+      }
+
+      // The <audio> node was replaced (tracks arrived / StrictMode remount), so
+      // the previous graph is bound to a detached element and must be discarded.
+      if (contextRef.current) {
+        void contextRef.current.close().catch(() => undefined)
+        analyserRef.current = null
+        contextRef.current = null
+        boundElRef.current = null
+      }
+
+      try {
+        const Ctx =
+          window.AudioContext ??
+          (window as unknown as { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext
+        if (!Ctx) return
+        const ctx = new Ctx()
+        const source = ctx.createMediaElementSource(el)
+        const analyser = ctx.createAnalyser()
+        analyser.fftSize = 64
+        analyser.smoothingTimeConstant = 0.85
+        source.connect(analyser)
+        analyser.connect(ctx.destination)
+        analyserRef.current = analyser
+        contextRef.current = ctx
+        boundElRef.current = el
+      } catch {
+        // Analyser unavailable — equalizer stays idle, element plays directly.
+      }
+
+      resumeContext()
+    },
+    [resumeContext],
+  )
 
   // Load the audio whenever the current track changes.
   useEffect(() => {
@@ -115,12 +146,7 @@ export function MusicDisc() {
 
   const attemptPlayback = useCallback(
     (el: HTMLAudioElement, wireAnalyser = false) => {
-      if (wireAnalyser) {
-        void ensureAnalyser(el)
-        if (contextRef.current?.state === 'suspended') {
-          void contextRef.current.resume().catch(() => undefined)
-        }
-      }
+      if (wireAnalyser) ensureAnalyser(el)
       if (tracks.length > 1) {
         const next = shuffleIndex(tracks, currentIndex)
         const track = tracks[next]
@@ -132,7 +158,7 @@ export function MusicDisc() {
       void el
         .play()
         .then(() => setHasStarted(true))
-        .catch(() => undefined)
+        .catch(() => setIsPlaying(false))
     },
     [currentIndex, ensureAnalyser, tracks],
   )
@@ -160,16 +186,24 @@ export function MusicDisc() {
     return () => window.removeEventListener('pointerdown', onInteract)
   }, [tracks, hasStarted, attemptPlayback])
 
+  // Keep a suspended context alive when the tab regains focus / is restored.
+  useEffect(() => {
+    const wake = () => resumeContext()
+    document.addEventListener('visibilitychange', wake)
+    window.addEventListener('pageshow', wake)
+    return () => {
+      document.removeEventListener('visibilitychange', wake)
+      window.removeEventListener('pageshow', wake)
+    }
+  }, [resumeContext])
+
   const togglePlay = () => {
     const el = audioRef.current
     if (!el || !current) return
     setHasStarted(true)
     if (el.paused) {
-      void ensureAnalyser(el)
-      if (contextRef.current?.state === 'suspended') {
-        void contextRef.current.resume().catch(() => undefined)
-      }
-      void el.play().catch(() => undefined)
+      ensureAnalyser(el)
+      void el.play().catch(() => setIsPlaying(false))
     } else {
       el.pause()
     }
@@ -183,11 +217,8 @@ export function MusicDisc() {
       playFrom(el)
     } else {
       el.currentTime = 0
-      void ensureAnalyser(el)
-      if (contextRef.current?.state === 'suspended') {
-        void contextRef.current.resume().catch(() => undefined)
-      }
-      void el.play().catch(() => undefined)
+      ensureAnalyser(el)
+      void el.play().catch(() => setIsPlaying(false))
     }
   }
 
@@ -211,8 +242,13 @@ export function MusicDisc() {
     >
       <audio
         ref={audioRef}
+        crossOrigin="anonymous"
         preload="auto"
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => {
+          errorCountRef.current = 0
+          setIsPlaying(true)
+          resumeContext()
+        }}
         onPause={() => setIsPlaying(false)}
         onEnded={() => {
           const el = audioRef.current
@@ -222,16 +258,18 @@ export function MusicDisc() {
             setCurrentIndex((prev) => shuffleIndex(tracks, prev))
           } else {
             el.currentTime = 0
-            void el.play().catch(() => undefined)
+            void el.play().catch(() => setIsPlaying(false))
           }
         }}
         onError={() => {
           const el = audioRef.current
-          if (!el) return
           setIsPlaying(false)
-          if (tracks.length > 1) {
+          errorCountRef.current += 1
+          if (el && tracks.length > 1 && errorCountRef.current < tracks.length) {
             pendingPlayRef.current = true
             setCurrentIndex((prev) => shuffleIndex(tracks, prev))
+          } else {
+            pendingPlayRef.current = false
           }
         }}
       />
